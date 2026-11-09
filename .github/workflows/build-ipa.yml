@@ -46,3 +46,13 @@ jobs:
           name: Verto-IPA
           path: build/Verto-unsigned.ipa
           retention-days: 30
+
+      - name: Create Release and upload IPA
+        uses: softprops/action-gh-release@v2
+        with:
+ tag_name: build-latest
+ name: Verto IPA (unsigned)
+ body: Latest unsigned IPA build for sideloading via AltStore/SideStore
+ files: build/Verto-unsigned.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

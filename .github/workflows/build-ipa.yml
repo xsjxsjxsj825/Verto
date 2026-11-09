@@ -1,0 +1,49 @@
+name: Build IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Resolve Swift packages
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project Verto.xcodeproj \
+            -scheme Verto
+
+      - name: Build archive
+        run: |
+          xcodebuild archive \
+            -project Verto.xcodeproj \
+            -scheme Verto \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Verto.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER=""
+
+      - name: Create unsigned IPA
+        run: |
+          mkdir -p build/Payload
+          cp -r build/Verto.xcarchive/Products/Applications/Verto.app build/Payload/
+          cd build
+          zip -r Verto-unsigned.ipa Payload
+          ls -lh Verto-unsigned.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Verto-IPA
+          path: build/Verto-unsigned.ipa
+          retention-days: 30
